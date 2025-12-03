@@ -1,17 +1,26 @@
 """Application settings using Pydantic BaseSettings."""
 from pydantic_settings import BaseSettings
 from typing import Dict, Tuple
+import os
 
 
 class Settings(BaseSettings):
     """Application configuration."""
     
     # Database
+    # For local dev: sqlite+aiosqlite:///./catalog_images.db
+    # For Vercel: Use Vercel Postgres connection string from environment
+    # Format: postgresql+asyncpg://user:password@host:port/database
     DATABASE_URL: str = "sqlite+aiosqlite:///./catalog_images.db"
     
     # Storage
-    STORAGE_TYPE: str = "local"  # 'local' or 's3' (S3 adapter not implemented, see comments)
+    # Auto-detect: if BLOB_READ_WRITE_TOKEN exists, use vercel_blob, else local
+    _blob_token = os.getenv("BLOB_READ_WRITE_TOKEN")
+    STORAGE_TYPE: str = "vercel_blob" if _blob_token else "local"  # 'local', 'vercel_blob', or 's3'
     STORAGE_BASE_PATH: str = "./storage"  # For local storage
+    
+    # Vercel Blob Storage (when STORAGE_TYPE=vercel_blob)
+    # BLOB_READ_WRITE_TOKEN is automatically set by Vercel when Blob Storage is enabled
     
     # S3 settings (for future S3 adapter)
     # AWS_ACCESS_KEY_ID: str = ""

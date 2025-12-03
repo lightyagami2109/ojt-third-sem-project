@@ -176,21 +176,93 @@ The API will be available at `http://localhost:8000`
 
 ## Vercel Deployment
 
-1. **Install Vercel CLI:**
+### Prerequisites
+
+1. **Vercel Account**: Sign up at https://vercel.com
+2. **Vercel CLI** (optional, for CLI deployment):
 ```bash
 npm i -g vercel
 ```
 
-2. **Deploy:**
+### Step 1: Set Up Vercel Postgres
+
+1. Go to your Vercel project dashboard
+2. Navigate to **Storage** → **Create Database** → **Postgres**
+3. Create a new Postgres database
+4. Vercel will automatically set the `POSTGRES_URL` environment variable
+
+### Step 2: Set Up Vercel Blob Storage
+
+1. In your Vercel project dashboard
+2. Navigate to **Storage** → **Create Database** → **Blob**
+3. Create a new Blob store
+4. Vercel will automatically set the `BLOB_READ_WRITE_TOKEN` environment variable
+
+### Step 3: Deploy
+
+**Option A: Deploy via GitHub (Recommended)**
+
+1. Push your code to GitHub (already done)
+2. Go to https://vercel.com/new
+3. Import your GitHub repository: `lightyagami2109/ojt-third-sem-project`
+4. Vercel will auto-detect settings
+5. **Important**: Make sure Vercel Postgres and Blob Storage are connected to your project
+6. Click **Deploy**
+
+**Option B: Deploy via CLI**
+
 ```bash
+# Login
+vercel login
+
+# Deploy (first time)
 vercel
+
+# Deploy to production
+vercel --prod
 ```
 
-3. **Set environment variables (if needed):**
+### Step 4: Create Database Tables
+
+After deployment, you need to create the database tables. You can do this by:
+
+1. **Using Vercel CLI** (from your local machine):
 ```bash
-vercel env add DATABASE_URL
-vercel env add STORAGE_TYPE
-# etc.
+# Set up database connection
+vercel env pull .env.local
+
+# Run the create tables script (requires local setup)
+python src/cli_create_tables.py
+```
+
+2. **Or create a one-time migration endpoint** (add temporarily):
+   - Add a `/migrate` endpoint that creates tables
+   - Call it once after deployment
+   - Remove it after use
+
+### Environment Variables (Auto-configured)
+
+Vercel automatically sets these when you add Postgres and Blob Storage:
+- `POSTGRES_URL` - Database connection string
+- `BLOB_READ_WRITE_TOKEN` - Blob storage authentication token
+
+The app automatically detects these and switches to:
+- PostgreSQL database (instead of SQLite)
+- Vercel Blob Storage (instead of local filesystem)
+
+### After Deployment
+
+Your API will be available at:
+- Production: `https://your-project.vercel.app`
+- Preview: `https://your-project-git-branch.vercel.app`
+
+Test it:
+```bash
+# Health check
+curl https://your-project.vercel.app/health
+
+# API docs
+# Open: https://your-project.vercel.app/docs
 ```
 
 ## Configuration

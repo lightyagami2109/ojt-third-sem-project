@@ -111,6 +111,87 @@ class LocalStorageAdapter(StorageAdapter):
         return full_path.exists()
 
 
+class VercelBlobStorageAdapter(StorageAdapter):
+    """Vercel Blob Storage adapter (for Vercel deployment).
+    
+    Uses Vercel Blob REST API directly.
+    BLOB_READ_WRITE_TOKEN is automatically available in Vercel environment.
+    """
+    
+    def __init__(self):
+        import os
+        self.token = os.getenv("BLOB_READ_WRITE_TOKEN")
+        if not self.token:
+            raise ValueError(
+                "BLOB_READ_WRITE_TOKEN not found. "
+                "This is automatically set in Vercel environment."
+            )
+        self.base_url = "https://blob.vercel-storage.com"
+    
+    async def save(self, key: str, data: bytes) -> str:
+        """Save data to Vercel Blob Storage and return URL."""
+        import aiohttp
+        
+        url = f"{self.base_url}/{key}"
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "image/jpeg",
+            "x-content-type": "image/jpeg",
+        }
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.put(url, data=data, headers=headers) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    return result.get("url", url)
+                else:
+                    error_text = await response.text()
+                    raise Exception(f"Failed to upload to Vercel Blob: {error_text}")
+    
+    async def get(self, key: str) -> bytes:
+        """Retrieve data from Vercel Blob Storage."""
+        import aiohttp
+        
+        # If key is already a full URL, use it directly
+        url = key if key.startswith("http") else f"{self.base_url}/{key}"
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status == 200:
+                    return await response.read()
+                else:
+                    raise FileNotFoundError(f"Blob not found: {key}")
+    
+    async def delete(self, key: str) -> bool:
+        """Delete data from Vercel Blob Storage."""
+        import aiohttp
+        
+        # Extract URL from key if it's a full URL
+        if key.startswith("http"):
+            url = key
+        else:
+            url = f"{self.base_url}/{key}"
+        
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+        }
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.delete(url, headers=headers) as response:
+                    return response.status in [200, 204]
+        except Exception:
+            return False
+    
+    async def exists(self, key: str) -> bool:
+        """Check if key exists in Vercel Blob Storage."""
+        try:
+            await self.get(key)
+            return True
+        except Exception:
+            return False
+
+
 # Future S3 adapter (not implemented, placeholder for production)
 # class S3StorageAdapter(StorageAdapter):
 #     """S3 storage adapter (for production).
@@ -128,6 +209,8 @@ def get_storage_adapter() -> StorageAdapter:
     """Factory function to get storage adapter based on settings."""
     if settings.STORAGE_TYPE == "local":
         return LocalStorageAdapter()
+    elif settings.STORAGE_TYPE == "vercel_blob":
+        return VercelBlobStorageAdapter()
     # elif settings.STORAGE_TYPE == "s3":
     #     return S3StorageAdapter()
     else:

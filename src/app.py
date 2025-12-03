@@ -43,3 +43,22 @@ async def health():
     """Health check endpoint."""
     return {"status": "healthy"}
 
+
+@app.post("/migrate")
+async def migrate():
+    """
+    Create database tables (one-time migration endpoint).
+    
+    WARNING: Only use this once after deployment to create tables.
+    In production, consider removing this endpoint or adding authentication.
+    """
+    from src.db import engine, Base
+    from src.models import Tenant, Asset, Rendition, Job
+    
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        return {"status": "success", "message": "Database tables created successfully"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
