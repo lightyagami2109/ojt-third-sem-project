@@ -186,17 +186,37 @@ npm i -g vercel
 
 ### Step 1: Set Up Vercel Postgres
 
-1. Go to your Vercel project dashboard
-2. Navigate to **Storage** → **Create Database** → **Postgres**
-3. Create a new Postgres database
-4. Vercel will automatically set the `POSTGRES_URL` environment variable
+1. Go to your Vercel project dashboard (after initial deployment)
+2. Click on your project name to open the project dashboard
+3. Navigate to the **Storage** tab (in the top navigation)
+4. Click **Create Database** button
+5. You'll see database options - **Select "Postgres"** (Vercel Postgres)
+   - **Important**: Choose "Postgres" (Vercel's managed Postgres), NOT "Neon" or other options
+   - The option should say "Vercel Postgres" or just "Postgres"
+6. Click **Create** or **Continue**
+7. Choose a name for your database (e.g., "catalog-images-db")
+8. Select a region (choose closest to your users, e.g., "US East" or "EU West")
+9. Click **Create Database**
+10. Vercel will automatically:
+    - Create the database
+    - Set the `POSTGRES_URL` environment variable
+    - Connect it to your project
 
 ### Step 2: Set Up Vercel Blob Storage
 
-1. In your Vercel project dashboard
-2. Navigate to **Storage** → **Create Database** → **Blob**
-3. Create a new Blob store
-4. Vercel will automatically set the `BLOB_READ_WRITE_TOKEN` environment variable
+1. In your Vercel project dashboard (same project)
+2. Go to the **Storage** tab (if not already there)
+3. Click **Create Database** button again
+4. You'll see storage options - **Select "Blob"** (Vercel Blob Storage)
+   - **Important**: Choose "Blob" (Vercel Blob Storage), NOT "S3" or other options
+   - The option should say "Blob" or "Vercel Blob"
+5. Click **Create** or **Continue**
+6. Choose a name for your blob store (e.g., "catalog-images-blob")
+7. Click **Create**
+8. Vercel will automatically:
+    - Create the blob store
+    - Set the `BLOB_READ_WRITE_TOKEN` environment variable
+    - Connect it to your project
 
 ### Step 3: Deploy
 
